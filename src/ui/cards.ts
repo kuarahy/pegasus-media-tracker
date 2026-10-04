@@ -60,6 +60,10 @@ export function applyItemDoneState(card: HTMLElement, done: boolean, actionLabel
 function renderCover(card: HTMLElement, name: string, coverSrc: string | null): void {
 	const cover = card.createDiv({ cls: "media-tracker-card-cover" });
 	if (coverSrc) {
+		// ninja: blur layer fills dead space for non-2:3 covers (square, landscape, etc.)
+		// without cropping the actual artwork — see styles.css .media-tracker-card-cover-blur
+		const blur = cover.createDiv({ cls: "media-tracker-card-cover-blur" });
+		blur.style.backgroundImage = `url("${coverSrc}")`;
 		cover.createEl("img", { attr: { src: coverSrc, alt: name } });
 		return;
 	}

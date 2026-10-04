@@ -4,7 +4,6 @@ import { registerCommands } from "./commands";
 import { DEFAULT_SETTINGS, MediaTrackerSettingTab, type MediaTrackerSettings } from "./settings";
 import { VIEW_TYPE_MEDIA_TRACKER } from "./types";
 import { MediaTrackerView } from "./ui/grid-view";
-import { registerHomepageButton, removeHomepageButtons } from "./ui/homepage-button";
 
 export default class MediaTrackerPlugin extends Plugin {
 	settings!: MediaTrackerSettings;
@@ -19,11 +18,10 @@ export default class MediaTrackerPlugin extends Plugin {
 
 		this.registerView(VIEW_TYPE_MEDIA_TRACKER, (leaf) => new MediaTrackerView(leaf, this));
 		this.addRibbonIcon("layout-grid", "Open Pegasus Media Tracker", () => {
-			void this.activateView();
+			void this.activateHomepage();
 		});
 		this.addSettingTab(new MediaTrackerSettingTab(this.app, this));
 		registerCommands(this);
-		registerHomepageButton(this);
 		// ninja: opt-in — do not steal the active tab unless they asked.
 		this.app.workspace.onLayoutReady(() => {
 			if (!this.settings.openOnStartup) return;
@@ -51,10 +49,6 @@ export default class MediaTrackerPlugin extends Plugin {
 		await relocateRootImages(this.app);
 	}
 
-	onunload(): void {
-		removeHomepageButtons(this);
-	}
-
 	async saveSettings(): Promise<void> {
 		await this.saveData(this.settings);
 		this.refreshViews();
@@ -77,7 +71,7 @@ export default class MediaTrackerPlugin extends Plugin {
 		await this.app.workspace.revealLeaf(leaf);
 	}
 
-	private async activateHomepage(): Promise<void> {
+	async activateHomepage(): Promise<void> {
 		await this.activateView();
 		for (const leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_MEDIA_TRACKER)) {
 			const view = leaf.view;
