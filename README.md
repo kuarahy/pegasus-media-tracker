@@ -91,7 +91,7 @@ If `Media` does not exist, the view says so. **Create folder** makes it; it does
 - On a parent folder (library root, Comics, anything with subcollections), **Add New** asks for a name and creates that folder plus `Cover.md` inside it. `:` and other characters that Windows forbids in paths are kept as the card title; the folder name is slugged (`Supergirl: Woman of Tomorrow` → `Supergirl - Woman of Tomorrow`). Use **Add New** or **Change Title** for a colon in the title. Renaming the folder in the file tree cannot contain `:`.
 - **Change Title** sets `title:` on `Cover.md` for the current collection. It is hidden on the library root. The folder path does not change.
 - **Change Cover** on the current folder ensures `Cover.md`, then either opens it (paste or drop an image) or lets you type a vault path / wikilink to write `cover:` on that note.
-- On a series folder, **Add Next** creates the next numbered note. It takes the highest trailing number among sibling notes and reuses that file's prefix: `X-Men #16` → `X-Men #17`, `Saga 5` → `Saga 6`, `.6` → `.7`, `v6` → `v7`. If nothing is numbered yet, you get `{folder name} #1`.
+- On a series folder, **Add Next** creates the next numbered note. It takes the highest trailing number among sibling notes and reuses that file's prefix: `X-Men #16` → `X-Men #17`, `Saga 5` → `Saga 6`, `.6` → `.7`, `v6` → `v7`. If nothing is numbered yet, you get `{folder name} 1`.
 - **−** adds a column (smaller cards); **+** removes one (larger cards). The grid snaps so a row of cards meets the pane edges. The column count is saved.
 
 The grid opens as a tab in the main workspace. Command palette **Add next item** follows the same Add New / Add Next rule as the toolbar, for the open grid folder, or for the folder of the active note if the grid is closed.
@@ -107,16 +107,20 @@ Media/                          ← default library folder
   Comics/
     X-Men/
       Cover.md
-      X-Men #1.md
-      X-Men #16.md
+      X-Men 1.md
+      X-Men 16.md
   Manga/
     Death Note/
-      Death Note #1.md
+      Death Note 1.md
   Shows/
     Good Girls/
       Season 1/
-        Good Girls S01 #1.md
+        Good Girls S01 1.md
 ```
+
+Older vaults with `#` in item filenames (e.g., `X-Men #1.md`) still display correctly on desktop.
+
+**Migrating existing `#` filenames:** Files created before this version (e.g., `Saga #1.md`) will not sync to Android via Self-hosted LiveSync. Rename them on desktop by pressing F2 on each file and removing the `#` (e.g., `Saga 1.md`). Obsidian will update wikilinks automatically. A bulk rename community plugin can batch this across a collection.
 
 A note named **Cover** inside a collection folder is the cover / action note for that collection. It is not shown as an item card. **Add New** creates `Cover.md`. Older vaults may still use a note named like the folder (`X-Men/X-Men.md`); that still counts and is hidden from the grid. If a collection has no cover of its own, the grid uses a matching file in `assets/covers/`, then the first child collection's cover, then the first child's item cover.
 

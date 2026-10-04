@@ -158,11 +158,11 @@ function uniqueChildName(app: App, parent: TFolder, slug: string): string {
 	return name;
 }
 
-// ninja: `:` and `：` become " - " so comic subtitles stay readable; other illegal path chars become "-".
+// ninja: `:` and `：` become " - " so comic subtitles stay readable; other illegal path chars (including `#`) become "-".
 function folderSlug(title: string): string {
 	const slug = title
 		.replace(/[:：]/g, " - ")
-		.replace(/[\\/:*?"<>|]/g, "-")
+		.replace(/[\\/:*?"<>|#]/g, "-")
 		.replace(/\s+/g, " ")
 		.replace(/-\s*-/g, "-")
 		.trim()
