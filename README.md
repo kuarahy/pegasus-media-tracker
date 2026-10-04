@@ -19,7 +19,7 @@ If this plugin helps you, you can support development here:
 - **Covers** — from `cover:` on the note, an embed, an image in the folder, or `assets/covers/`. png, jpg, webp, avif, gif, bmp, svg. Vault-root image dumps move into `assets/covers/`.
 - **Read** — on series issues, toggles `done`. Green when read. Hidden on libraries (library root, Comics, Covers Collection, and other top-level folders). Per-folder `action:` can relabel the button (e.g. Watched).
 - **Add New** — on a library or parent collection, creates a child folder plus `Cover.md`.
-- **Add Next** — in a series folder, creates the next numbered note, cloning however you already number (`#16` → `#17`, `5` → `6`, `.6` → `.7`, `v6` → `v7`).
+- **Add Next** — in a series folder, creates the next numbered note, cloning however you already number (`5` → `6`, `.6` → `.7`, `v6` → `v7`, `#16` → `#17`). New series default to space-separated numbers (`Saga 1`, `Saga 2`) — no `#` in filenames, so files sync cleanly on Android via Self-hosted LiveSync.
 - **Change Title** — display name on `Cover.md` for a collection. Hidden on the library root. Does not rename the folder.
 - **Change Cover** — open `Cover.md` to paste/drop an image, or write a vault path / wikilink into `cover:`.
 - **Zoom** — **− / +** or Ctrl/Cmd + scroll. Integer columns that snap to the pane. Saved.
