@@ -4,7 +4,6 @@ import { registerCommands } from "./commands";
 import { DEFAULT_SETTINGS, MediaTrackerSettingTab, type MediaTrackerSettings } from "./settings";
 import { VIEW_TYPE_MEDIA_TRACKER } from "./types";
 import { MediaTrackerView } from "./ui/grid-view";
-import { registerHomepageButton, removeHomepageButtons } from "./ui/homepage-button";
 
 export default class MediaTrackerPlugin extends Plugin {
 	settings!: MediaTrackerSettings;
@@ -23,7 +22,6 @@ export default class MediaTrackerPlugin extends Plugin {
 		});
 		this.addSettingTab(new MediaTrackerSettingTab(this.app, this));
 		registerCommands(this);
-		registerHomepageButton(this);
 		// ninja: opt-in — do not steal the active tab unless they asked.
 		this.app.workspace.onLayoutReady(() => {
 			if (!this.settings.openOnStartup) return;
@@ -49,10 +47,6 @@ export default class MediaTrackerPlugin extends Plugin {
 		if (this.coversRelocated) return;
 		this.coversRelocated = true;
 		await relocateRootImages(this.app);
-	}
-
-	onunload(): void {
-		removeHomepageButtons(this);
 	}
 
 	async saveSettings(): Promise<void> {

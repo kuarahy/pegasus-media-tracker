@@ -34,19 +34,6 @@
 	gap: var(--size-4-1);
 }
 
-.media-tracker-homepage-button {
-	display: flex;
-	justify-content: center;
-	padding-top: var(--size-4-6);
-}
-
-.media-tracker-homepage-button button {
-	padding: var(--size-4-3) var(--size-4-6);
-	border-radius: var(--radius-m);
-	font-size: var(--font-ui-medium);
-	cursor: pointer;
-}
-
 .media-tracker-breadcrumb-link,
 .media-tracker-add,
 .media-tracker-cover,
