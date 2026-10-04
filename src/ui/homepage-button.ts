@@ -34,7 +34,7 @@ function injectButton(plugin: MediaTrackerPluginApi, leaf: WorkspaceLeaf | null)
 		cls: HOMEPAGE_BUTTON_CLASS,
 		text: "Open Pegasus homepage",
 	});
-	button.addEventListener("click", () => void plugin.activateView());
+	button.addEventListener("click", () => void plugin.activateHomepage());
 }
 
 // ninja: EmptyView is a bare View, not an ItemView, so it has no typed contentEl — same header/content split, one index over.

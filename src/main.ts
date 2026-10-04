@@ -19,7 +19,7 @@ export default class MediaTrackerPlugin extends Plugin {
 
 		this.registerView(VIEW_TYPE_MEDIA_TRACKER, (leaf) => new MediaTrackerView(leaf, this));
 		this.addRibbonIcon("layout-grid", "Open Pegasus Media Tracker", () => {
-			void this.activateView();
+			void this.activateHomepage();
 		});
 		this.addSettingTab(new MediaTrackerSettingTab(this.app, this));
 		registerCommands(this);
@@ -77,7 +77,7 @@ export default class MediaTrackerPlugin extends Plugin {
 		await this.app.workspace.revealLeaf(leaf);
 	}
 
-	private async activateHomepage(): Promise<void> {
+	async activateHomepage(): Promise<void> {
 		await this.activateView();
 		for (const leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_MEDIA_TRACKER)) {
 			const view = leaf.view;
