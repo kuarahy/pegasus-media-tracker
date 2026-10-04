@@ -1,4 +1,4 @@
-import type { View, WorkspaceLeaf } from "obsidian";
+import type { App, View, WorkspaceLeaf } from "obsidian";
 import type { MediaTrackerPluginApi } from "../settings";
 
 const HOMEPAGE_BUTTON_CLASS = "media-tracker-homepage-button";
@@ -34,7 +34,11 @@ function injectButton(plugin: MediaTrackerPluginApi, leaf: WorkspaceLeaf | null)
 		cls: HOMEPAGE_BUTTON_CLASS,
 		text: "Open Pegasus homepage",
 	});
-	button.addEventListener("click", () => void plugin.activateHomepage());
+	button.addEventListener("click", () => {
+		// ninja: app.commands is stable at runtime but absent from the official typings.
+		(plugin.app as App & { commands: { executeCommandById(id: string): boolean } })
+			.commands.executeCommandById("pegasus-media-tracker:open-library");
+	});
 }
 
 // ninja: EmptyView is a bare View, not an ItemView, so it has no typed contentEl — same header/content split, one index over.

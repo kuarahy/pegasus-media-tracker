@@ -11,7 +11,7 @@ export function registerCommands(plugin: MediaTrackerPluginApi): void {
 	plugin.addCommand({
 		id: "open-library",
 		name: "Open library",
-		callback: () => void plugin.activateView(),
+		callback: () => void plugin.activateHomepage(),
 	});
 
 	plugin.addCommand({
