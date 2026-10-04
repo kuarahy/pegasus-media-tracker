@@ -6,7 +6,7 @@ interface ParsedIssue {
 	width: number;
 }
 
-// ninja: trailing digits plus the text in front is the user's scheme (#, space, ., v, Volume, …).
+// ninja: trailing digits plus the text in front is the user's scheme (space, ., v, Volume, …). A # prefix is cloned only when all existing files already use it.
 export function parseIssueNumber(basename: string): number | null {
 	return parseIssue(basename)?.n ?? null;
 }
@@ -32,7 +32,7 @@ export function nextNoteBasename(existingBasenames: string[], collectionTitle: s
 			best = parsed;
 		}
 	}
-	const prefix = best?.prefix ?? `${collectionTitle} #`;
+	const prefix = best?.prefix ?? `${collectionTitle} `;
 	const width = best?.width ?? 1;
 	let n = (best?.n ?? 0) + 1;
 	let candidate = formatIssue(prefix, n, width);
@@ -43,10 +43,11 @@ export function nextNoteBasename(existingBasenames: string[], collectionTitle: s
 	return candidate;
 }
 
+// ninja: in a mixed folder (partial migration), prefer the no-# prefix so Add Next stops propagating #.
 function prefersPrefix(candidate: ParsedIssue, current: ParsedIssue): boolean {
 	const candidateHash = candidate.prefix.includes("#");
 	const currentHash = current.prefix.includes("#");
-	return candidateHash && !currentHash;
+	return !candidateHash && currentHash;
 }
 
 function parseIssue(basename: string): ParsedIssue | null {
