@@ -35,7 +35,18 @@
 }
 
 .media-tracker-homepage-button {
-	margin-top: var(--size-4-4);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 100%;
+	min-height: 200px;
+}
+
+.media-tracker-homepage-button button {
+	padding: var(--size-4-3) var(--size-4-6);
+	border-radius: var(--radius-m);
+	font-size: var(--font-ui-medium);
+	cursor: pointer;
 }
 
 .media-tracker-breadcrumb-link,
