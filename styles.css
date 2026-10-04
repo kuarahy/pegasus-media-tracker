@@ -34,10 +34,6 @@
 	gap: var(--size-4-1);
 }
 
-.media-tracker-homepage-button {
-	margin-top: var(--size-4-4);
-}
-
 .media-tracker-breadcrumb-link,
 .media-tracker-add,
 .media-tracker-cover,

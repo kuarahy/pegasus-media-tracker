@@ -5,7 +5,6 @@ export interface MediaTrackerSettings {
 	actionLabel: string;
 	gridColumns: number;
 	openOnStartup: boolean;
-	showHomepageButtonOnNewTab: boolean;
 }
 
 export const DEFAULT_SETTINGS: MediaTrackerSettings = {
@@ -13,13 +12,13 @@ export const DEFAULT_SETTINGS: MediaTrackerSettings = {
 	actionLabel: "Read",
 	gridColumns: 6,
 	openOnStartup: false,
-	showHomepageButtonOnNewTab: true,
 };
 
 export interface MediaTrackerPluginApi extends Plugin {
 	settings: MediaTrackerSettings;
 	saveSettings(): Promise<void>;
 	activateView(): Promise<void>;
+	activateHomepage(): Promise<void>;
 	ensureRootCoversRelocated(): Promise<void>;
 	persistSettings(): Promise<void>;
 }
@@ -51,11 +50,6 @@ export class MediaTrackerSettingTab extends PluginSettingTab {
 				control: { type: "toggle" as const, key: "openOnStartup" },
 			},
 			{
-				name: "Homepage button on new tab",
-				desc: "When on, show an Open Pegasus homepage button on empty/new tabs. On by default.",
-				control: { type: "toggle" as const, key: "showHomepageButtonOnNewTab" },
-			},
-			{
 				name: "Action label",
 				desc: "Button text on item cards. A collection folder note can override this with an action property.",
 				control: {
@@ -83,9 +77,6 @@ export class MediaTrackerSettingTab extends PluginSettingTab {
 				break;
 			case "openOnStartup":
 				this.plugin.settings.openOnStartup = value === true;
-				break;
-			case "showHomepageButtonOnNewTab":
-				this.plugin.settings.showHomepageButtonOnNewTab = value === true;
 				break;
 			case "actionLabel":
 				this.plugin.settings.actionLabel = normalizeActionLabel(value);
