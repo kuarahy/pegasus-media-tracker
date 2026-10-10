@@ -1,5 +1,5 @@
 import { ItemView, Notice, TAbstractFile, TFile, WorkspaceLeaf } from "obsidian";
-import { createCollection, createNextNote, ensureCoverNote, ensureFolder, setCollectionTitle, setCoverOnNote, toggleItemDone } from "../actions";
+import { createCollection, createNextNote, ensureCoverNote, ensureFolder, setCollectionTitle, setCoverOnNote, setItemCoverFromFile, setItemCoverFromVaultFile, toggleItemDone } from "../actions";
 import { resolveCollectionCover, resolveItemCover } from "../cover";
 import {
 	addToolbarMode,
@@ -29,6 +29,8 @@ export class MediaTrackerView extends ItemView {
 	private resizeObserver: ResizeObserver | null = null;
 	private past: string[] = [];
 	private future: string[] = [];
+	// ninja: stored so drag-leave can check if the pointer left the grid entirely.
+	private gridEl: HTMLElement | null = null;
 
 	constructor(leaf: WorkspaceLeaf, plugin: MediaTrackerPluginApi) {
 		super(leaf);
@@ -176,6 +178,8 @@ export class MediaTrackerView extends ItemView {
 
 		const actionLabel = readActionLabel(this.app, folder, this.plugin.settings.actionLabel);
 		const grid = root.createDiv({ cls: "media-tracker-grid" });
+		this.gridEl = grid;
+		this.registerItemDropListeners(grid);
 		this.renderCards(grid, nodes, actionLabel, mode === "add-next");
 		this.applyGridColumns();
 	}
@@ -366,6 +370,120 @@ export class MediaTrackerView extends ItemView {
 		this.contentEl.addEventListener("wheel", onWheel, { passive: false });
 		this.register(() => this.contentEl.removeEventListener("wheel", onWheel));
 	}
+
+	// ── Drag-drop: set item cover by dropping an image onto a card ─────────────
+
+	// ninja: delegate all four events to the grid element rather than attaching per-card.
+	// One listener set survives re-renders, handles drags over child elements via closest(),
+	// and needs only a single this.register() call for cleanup.
+	private registerItemDropListeners(grid: HTMLElement): void {
+		const onEnter = (e: DragEvent) => this.onGridDragEnter(e);
+		const onOver = (e: DragEvent) => this.onGridDragOver(e);
+		const onLeave = (e: DragEvent) => this.onGridDragLeave(e);
+		const onDrop = (e: DragEvent) => void this.onGridDrop(e);
+
+		grid.addEventListener("dragenter", onEnter, false);
+		grid.addEventListener("dragover", onOver, false);
+		grid.addEventListener("dragleave", onLeave, false);
+		grid.addEventListener("drop", onDrop, false);
+
+		this.register(() => {
+			grid.removeEventListener("dragenter", onEnter, false);
+			grid.removeEventListener("dragover", onOver, false);
+			grid.removeEventListener("dragleave", onLeave, false);
+			grid.removeEventListener("drop", onDrop, false);
+		});
+	}
+
+	private onGridDragEnter(e: DragEvent): void {
+		const card = (e.target as HTMLElement).closest<HTMLElement>(".media-tracker-card-item");
+		if (card) this.gridEl?.classList.add("has-drag-active");
+	}
+
+	private onGridDragOver(e: DragEvent): void {
+		const card = (e.target as HTMLElement).closest<HTMLElement>(".media-tracker-card-item");
+		if (!card) return; // dragging over grid background — do not accept
+
+		const dt = e.dataTransfer;
+		if (!dt) return;
+
+		const hasFiles = dt.types.includes("Files");
+		const hasVault = dt.types.includes("text/plain");
+		// ninja: Electron populates items[0].type during dragover; empty string means the type
+		// wasn't resolved yet — accept tentatively and validate the real MIME at drop time.
+		const firstType = dt.items[0]?.type ?? "";
+		const isImage = hasFiles ? firstType === "" || firstType.startsWith("image/") : hasVault;
+
+		if (!isImage) {
+			dt.dropEffect = "none";
+			return;
+		}
+
+		e.preventDefault();
+		dt.dropEffect = "copy";
+		this.gridEl?.classList.add("has-drag-active");
+
+		// Move is-drop-target to the currently hovered card only.
+		this.gridEl?.querySelectorAll(".is-drop-target").forEach((el) => {
+			if (el !== card) el.classList.remove("is-drop-target");
+		});
+		card.classList.add("is-drop-target");
+	}
+
+	private onGridDragLeave(e: DragEvent): void {
+		const card = (e.target as HTMLElement).closest<HTMLElement>(".media-tracker-card-item");
+		// ninja: dragleave fires when the pointer moves from the card to a child element
+		// (cover image, title div). If relatedTarget is still inside the card, skip —
+		// otherwise is-drop-target flickers off and immediately back on.
+		if (card && card.contains(e.relatedTarget as Node)) return;
+		card?.classList.remove("is-drop-target");
+
+		if (this.gridEl && !this.gridEl.contains(e.relatedTarget as Node)) {
+			this.gridEl.classList.remove("has-drag-active");
+		}
+	}
+
+	private async onGridDrop(e: DragEvent): Promise<void> {
+		e.preventDefault();
+
+		// Always clean up visual state regardless of whether we land on a card.
+		this.gridEl?.classList.remove("has-drag-active");
+		this.gridEl?.querySelectorAll(".is-drop-target").forEach((el) => el.classList.remove("is-drop-target"));
+
+		const card = (e.target as HTMLElement).closest<HTMLElement>(".media-tracker-card-item");
+		if (!card) return;
+
+		const itemPath = card.dataset.path;
+		if (!itemPath) return;
+
+		const dt = e.dataTransfer;
+		if (!dt) return;
+
+		if (dt.files.length > 0) {
+			const file = dt.files[0];
+			if (!file) return;
+			if (!file.type.startsWith("image/")) {
+				new Notice("Drop an image file to set the cover.");
+				return;
+			}
+			try {
+				await setItemCoverFromFile(this.app, itemPath, file);
+			} catch (err) {
+				new Notice(`Could not set cover: ${err instanceof Error ? err.message : String(err)}`);
+			}
+		} else {
+			// Obsidian vault file drag — text/plain carries the vault-relative path.
+			const vaultPath = dt.getData("text/plain").trim();
+			if (!vaultPath) return;
+			try {
+				await setItemCoverFromVaultFile(this.app, itemPath, vaultPath);
+			} catch (err) {
+				new Notice(`Could not set cover: ${err instanceof Error ? err.message : String(err)}`);
+			}
+		}
+	}
+
+	// ── end drag-drop ─────────────────────────────────────────────────────────
 
 	private registerHistoryListeners(): void {
 		const onMouseDown = (event: MouseEvent) => {
