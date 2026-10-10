@@ -10,7 +10,10 @@
 	gap: var(--size-4-2);
 	/* sticky: pins toolbar to the top of the scrollport while the grid scrolls beneath */
 	position: sticky;
-	top: 0;
+	/* ninja: top must match the negative margin-top so the sticky snap-point fires exactly
+	   when the toolbar's visual top edge reaches the scroll container boundary. If top were
+	   left at 0, the toolbar would float padding-top px below the edge before locking. */
+	top: calc(-1 * var(--size-4-3));
 	/* ninja: card-cover img children carry z-index:1 (stacks above blur layer) which lands
 	   in the same stacking context as this toolbar. Because the grid follows the toolbar in
 	   the DOM, those z-index:1 card images paint on top of a toolbar also at z-index:1 while
@@ -18,8 +21,13 @@
 	   to spare, without conflicting with Obsidian's own UI chrome (modals, sidedock ~100+). */
 	z-index: 10;
 	background-color: var(--background-primary);
-	/* negative margins + matching padding pulls the background edge-to-edge, covering
-	   side-gutter slivers that would otherwise show grid cards scrolling behind */
+	/* negative margins + matching padding pulls the background edge-to-edge on all four
+	   sides, covering every gutter sliver where grid cards could show through on scroll.
+	   Top axis: margin-top pulls the background flush with the view's padding-top boundary
+	   so the padding-top strip above the toolbar is covered when the element goes sticky.
+	   Left/right: same pattern for the side gutters (pre-existing). */
+	margin-top: calc(-1 * var(--size-4-3));
+	padding-top: var(--size-4-3);
 	margin-left: calc(-1 * var(--size-4-3));
 	margin-right: calc(-1 * var(--size-4-3));
 	padding-left: var(--size-4-3);
