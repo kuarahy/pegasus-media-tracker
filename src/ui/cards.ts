@@ -32,6 +32,9 @@ export function createItemCard(
 		path: string;
 		coverSrc: string | null;
 		done: boolean;
+		own: boolean;
+		/** null = not set; falls back to parseTitleParts heuristic. */
+		subtitle: string | null;
 		actionLabel: string;
 		onOpen: () => void;
 		onToggle: (card: HTMLElement) => void;
@@ -40,16 +43,23 @@ export function createItemCard(
 ): HTMLElement {
 	const card = parent.createDiv({ cls: "media-tracker-card media-tracker-card-item" });
 	card.dataset.path = opts.path;
+	card.classList.toggle("is-owned", opts.own);
 	card.addEventListener("click", opts.onOpen);
 	renderCover(card, opts.name, opts.coverSrc);
 
 	const titleEl = card.createDiv({ cls: "media-tracker-card-title", attr: { title: opts.name } });
-	const parts = parseTitleParts(opts.name);
-	if (parts) {
-		// ninja: en dash (\u2013) replaces the hyphen-minus from the filename; the tooltip
-		// on the parent still carries the raw filename string for screen readers and hover.
-		titleEl.createSpan({ cls: "media-tracker-card-title-primary", text: parts.primary });
-		titleEl.createSpan({ cls: "media-tracker-card-title-secondary", text: ` \u2013 ${parts.secondary}` });
+
+	// ninja: explicit subtitle takes priority over the regex fallback. When subtitle is
+	// set, primary is the full filename (the user opted out of the heuristic entirely).
+	// When subtitle is null, parseTitleParts runs as before — no existing card changes.
+	// en dash (\u2013) replaces the hyphen-minus from the filename; tooltip carries the
+	// raw filename string for screen readers and hover.
+	const secondary = opts.subtitle ?? parseTitleParts(opts.name)?.secondary ?? null;
+	const primary = opts.subtitle !== null ? opts.name : (parseTitleParts(opts.name)?.primary ?? null);
+
+	if (secondary !== null && primary !== null) {
+		titleEl.createSpan({ cls: "media-tracker-card-title-primary", text: primary });
+		titleEl.createSpan({ cls: "media-tracker-card-title-secondary", text: ` \u2013 ${secondary}` });
 	} else {
 		titleEl.setText(opts.name);
 	}

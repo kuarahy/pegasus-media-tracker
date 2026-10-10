@@ -15,6 +15,9 @@ export interface ItemNode {
 	name: string;
 	path: string;
 	done: boolean;
+	own: boolean;
+	/** null = not set; card falls back to parseTitleParts heuristic on the filename. */
+	subtitle: string | null;
 }
 
 export interface BreadcrumbSegment {

@@ -93,6 +93,23 @@ export function readDone(app: App, file: TFile): boolean {
 	return done === true || done === "true";
 }
 
+// ninja: mirrors readDone exactly — truthy-check on true and "true" so both YAML
+// boolean true and any serialiser that quotes booleans work without extra guards.
+export function readOwn(app: App, file: TFile): boolean {
+	const own = readFrontmatterField(app, file, "own");
+	return own === true || own === "true";
+}
+
+// ninja: normalises whitespace and treats blank strings as absent, consistent with
+// readCollectionTitle's empty-string guard. typeof guard covers numbers, booleans,
+// arrays, and objects safely — no additional assertion needed.
+export function readSubtitle(app: App, file: TFile): string | null {
+	const subtitle = readFrontmatterField(app, file, "subtitle");
+	if (typeof subtitle !== "string") return null;
+	const trimmed = subtitle.trim();
+	return trimmed === "" ? null : trimmed;
+}
+
 export function readActionLabel(app: App, folder: TFolder, fallback: string): string {
 	const note = findFolderNote(folder);
 	if (!note) return fallback;
@@ -148,6 +165,8 @@ export function listChildren(app: App, folder: TFolder): LibraryNode[] {
 				name: markdownStem(child),
 				path: child.path,
 				done: readDone(app, child),
+				own: readOwn(app, child),
+				subtitle: readSubtitle(app, child),
 			} satisfies ItemNode);
 		}
 	}

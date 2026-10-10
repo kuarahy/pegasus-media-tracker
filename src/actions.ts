@@ -30,7 +30,10 @@ export async function ensureFolder(app: App, path: string): Promise<TFolder> {
 export async function createNextNote(app: App, folder: TFolder): Promise<TFile> {
 	const basename = nextNoteBasename(listItemBasenames(folder), folder.name);
 	const path = joinPath(folder, `${basename}.md`);
-	return app.vault.create(path, "---\ndone: false\n---\n");
+	// ninja: done first (primary tracking field); own follows. subtitle intentionally
+	// absent — it only appears when the user explicitly sets it (blank would suppress
+	// the parseTitleParts fallback on every new note).
+	return app.vault.create(path, "---\ndone: false\nown: false\n---\n");
 }
 
 export async function createCollection(app: App, parent: TFolder, rawName: string): Promise<TFolder> {
