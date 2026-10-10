@@ -135,6 +135,34 @@
 	opacity: 0.85;
 }
 
+/* Collection cards are navigation entry points; give their titles slightly more
+   presence than item cards so the grid is scannable at small widths.
+   ninja: specificity beats .media-tracker-card-title by one class — no !important,
+   no duplication of the base rule; padding/line-height/clamp setup inherited. */
+.media-tracker-card-collection .media-tracker-card-title {
+	font-size: var(--font-ui-medium);
+	font-weight: var(--font-semibold);
+	-webkit-line-clamp: 2;
+}
+
+/* Ownership pip — top-right corner of the cover area.
+   ninja: .media-tracker-card-cover already carries position:relative (ambient blur layer);
+   z-index:1 sits above the blur layer but below any drag-drop overlay (z-index:2).
+   box-shadow halo uses --background-primary so it is theme-aware. */
+.media-tracker-card-item.is-owned .media-tracker-card-cover::after {
+	content: '';
+	position: absolute;
+	top: 6px;
+	right: 6px;
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+	background-color: var(--color-green);
+	box-shadow: 0 0 0 2px var(--background-primary);
+	pointer-events: none;
+	z-index: 1;
+}
+
 .media-tracker-card-action {
 	margin: 0 var(--size-4-2) var(--size-4-2);
 }

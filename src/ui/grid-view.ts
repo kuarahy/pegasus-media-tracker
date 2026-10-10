@@ -200,6 +200,8 @@ export class MediaTrackerView extends ItemView {
 				path: node.path,
 				coverSrc: resolveItemCover(this.app, node.path),
 				done: node.done,
+				own: node.own,
+				subtitle: node.subtitle,
 				actionLabel,
 				showAction,
 				onOpen: () => void this.openItemNote(node.path),
