@@ -17,11 +17,15 @@ If this plugin helps you, you can support development here:
 
 - **Card grid** — folders are collections, notes are items. Nested collections are allowed.
 - **Covers** — from `cover:` on the note, an embed, an image in the folder, or `assets/covers/`. png, jpg, webp, avif, gif, bmp, svg. Vault-root image dumps move into `assets/covers/`.
+- **Drop to set cover** — drag an image file from your OS or from the vault file tree and drop it onto any card (item or collection) to set its cover instantly. No note-open required.
 - **Read** — on series issues, toggles `done`. Green when read. Hidden on libraries (library root, Comics, Covers Collection, and other top-level folders). Per-folder `action:` can relabel the button (e.g. Watched).
+- **Own indicator** — set `own: true` on an item note to show a green pip on the card. Track what you physically own at a glance.
+- **Subtitle** — set `subtitle:` on an item note to override the auto-detected secondary title. Without it the plugin splits variant names automatically (`X-Men 13 - Coello Variant` → primary + muted secondary).
 - **Add New** — on a library or parent collection, creates a child folder plus `Cover.md`.
 - **Add Next** — in a series folder, creates the next numbered note, cloning however you already number (`5` → `6`, `.6` → `.7`, `v6` → `v7`, `#16` → `#17`). New series default to space-separated numbers (`Saga 1`, `Saga 2`) — no `#` in filenames, so files sync cleanly on Android via Self-hosted LiveSync.
 - **Change Title** — display name on `Cover.md` for a collection. Hidden on the library root. Does not rename the folder.
 - **Change Cover** — open `Cover.md` to paste/drop an image, or write a vault path / wikilink into `cover:`.
+- **Sticky toolbar** — breadcrumb and action buttons stay pinned at the top while the grid scrolls.
 - **Zoom** — **− / +** or Ctrl/Cmd + scroll. Integer columns that snap to the pane. Saved.
 - **Navigation** — click to drill in, breadcrumb to go up, mouse back / forward like a browser. Opening a note is not a history step.
 - **Homepage by default** — optional. When on, the library grid opens when Obsidian starts. Off unless you turn it on in settings.
@@ -134,10 +138,14 @@ Item note:
 ---
 cover: "[[covers/xmen-1.jpg]]"
 done: false
+own: false
+subtitle: "Director's Cut"
 ---
 ```
 
 `cover` may be a wikilink, a vault path, or an `http(s)` URL. Image files include png, jpg, jpeg, gif, webp, bmp, svg, and avif. If `cover` is missing, the plugin uses the first embedded image in the note, then the first image file in the same folder. No covers are downloaded from the internet.
+
+`done` — toggled by the Read / Watched button. `own` — shows a green pip on the card when `true`. Both are written as `false` when **Add Next** creates a note. `subtitle` — explicit secondary title shown in the card; omit it to let the plugin auto-detect a variant label from the filename (`X-Men 13 - Coello Variant` → `X-Men 13` primary, `Coello Variant` muted).
 
 Collection folder note (optional):
 
