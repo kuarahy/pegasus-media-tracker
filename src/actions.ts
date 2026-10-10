@@ -1,4 +1,4 @@
-import { App, TFile, TFolder } from "obsidian";
+import { App, TFile, TFolder, Vault, normalizePath } from "obsidian";
 import { findCoverFileForCollection, isImageFile } from "./cover";
 import { COVER_FOLDER, COVER_NOTE_STEM, findFolderNote, getFolderByPath, listItemBasenames, readDone } from "./library";
 import { nextNoteBasename } from "./naming";
@@ -219,4 +219,110 @@ function availableCoverPath(app: App, filename: string): string {
 		n += 1;
 	}
 	return `${COVER_FOLDER}/${base} ${n}${ext}`;
+}
+
+// ninja: mirrors availableCoverPath but scoped to an arbitrary folder rather than assets/covers/.
+// Item covers live beside their note, not in the collection cover namespace.
+function availablePathInFolder(vault: Vault, folder: TFolder, preferred: string, fallback: string): string {
+	const folderBase = folder.path === "/" ? "" : folder.path;
+	const preferred_ = normalizePath(`${folderBase}/${preferred}`);
+	if (!vault.getAbstractFileByPath(preferred_)) return preferred_;
+
+	const orig = normalizePath(`${folderBase}/${fallback}`);
+	if (!vault.getAbstractFileByPath(orig)) return orig;
+
+	const dot = fallback.lastIndexOf(".");
+	const base = dot === -1 ? fallback : fallback.slice(0, dot);
+	const ext = dot === -1 ? "" : fallback.slice(dot);
+	let n = 1;
+	while (vault.getAbstractFileByPath(normalizePath(`${folderBase}/${base} ${n}${ext}`))) {
+		n += 1;
+	}
+	return normalizePath(`${folderBase}/${base} ${n}${ext}`);
+}
+
+/**
+ * Import an OS File (from a drag-drop event) into the vault beside the item note,
+ * then set cover: frontmatter on the note.
+ *
+ * ninja: destination is the item's own folder, not assets/covers/ — that folder is for
+ * collection covers. Mixing them would pollute findCoverFileForCollection's slug-matching.
+ * Naming preference: {itemBasename}{ext}, falling back to the original OS filename.
+ */
+export async function setItemCoverFromFile(app: App, itemPath: string, imageFile: File): Promise<void> {
+	const itemFile = app.vault.getAbstractFileByPath(itemPath);
+	if (!(itemFile instanceof TFile)) throw new Error(`Item note not found: ${itemPath}`);
+
+	const folder = itemFile.parent;
+	if (!folder) throw new Error(`Item note has no parent folder: ${itemPath}`);
+
+	const dot = imageFile.name.lastIndexOf(".");
+	const ext = dot === -1 ? "" : imageFile.name.slice(dot).toLowerCase();
+	const stem = itemFile.name.replace(/\.md$/i, "");
+	const preferred = `${stem}${ext}`;
+	const destPath = availablePathInFolder(app.vault, folder, preferred, imageFile.name);
+
+	const buffer = await imageFile.arrayBuffer();
+	await app.vault.createBinary(destPath, buffer);
+
+	await mutateFrontmatter(app, itemFile, (fm) => {
+		fm["cover"] = `[[${destPath}]]`;
+	});
+}
+
+/**
+ * Import an OS File into assets/covers/, then set cover: frontmatter on the
+ * collection's Cover note (created if it doesn't exist yet).
+ *
+ * ninja: collection covers live in assets/covers/ (slug-matched by
+ * findCoverFileForCollection). Item covers live beside their note — keep them separate
+ * so the slug scanner doesn't pick up item images as collection covers.
+ */
+export async function setCollectionCoverFromFile(app: App, folderPath: string, imageFile: File): Promise<void> {
+	const folder = getFolderByPath(app, folderPath);
+	if (!folder) throw new Error(`Collection folder not found: ${folderPath}`);
+
+	const note = await ensureCoverNote(app, folder);
+
+	await ensureFolder(app, COVER_FOLDER);
+	const dot = imageFile.name.lastIndexOf(".");
+	const ext = dot === -1 ? "" : imageFile.name.slice(dot).toLowerCase();
+	const destPath = availableCoverPath(app, `${folder.name}${ext}`);
+
+	const buffer = await imageFile.arrayBuffer();
+	await app.vault.createBinary(destPath, buffer);
+	await setCoverOnNote(app, note, `[[${destPath}]]`);
+}
+
+/**
+ * Point a collection's cover: frontmatter at an existing vault image file.
+ * No file copy — the image is already in the vault.
+ */
+export async function setCollectionCoverFromVaultFile(app: App, folderPath: string, imagePath: string): Promise<void> {
+	const folder = getFolderByPath(app, folderPath);
+	if (!folder) throw new Error(`Collection folder not found: ${folderPath}`);
+
+	const imageFile = app.vault.getAbstractFileByPath(imagePath);
+	if (!(imageFile instanceof TFile)) throw new Error(`Vault file not found: ${imagePath}`);
+	if (!isImageFile(imageFile)) throw new Error(`Not an image file: ${imagePath}`);
+
+	const note = await ensureCoverNote(app, folder);
+	await setCoverOnNote(app, note, `[[${imagePath}]]`);
+}
+
+/**
+ * Point an item's cover: frontmatter at an existing vault image file.
+ * No file copy — the image is already in the vault.
+ */
+export async function setItemCoverFromVaultFile(app: App, itemPath: string, imagePath: string): Promise<void> {
+	const itemFile = app.vault.getAbstractFileByPath(itemPath);
+	if (!(itemFile instanceof TFile)) throw new Error(`Item note not found: ${itemPath}`);
+
+	const imageFile = app.vault.getAbstractFileByPath(imagePath);
+	if (!(imageFile instanceof TFile)) throw new Error(`Vault file not found: ${imagePath}`);
+	if (!isImageFile(imageFile)) throw new Error(`Not an image file: ${imagePath}`);
+
+	await mutateFrontmatter(app, itemFile, (fm) => {
+		fm["cover"] = `[[${imagePath}]]`;
+	});
 }
