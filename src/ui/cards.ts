@@ -2,11 +2,15 @@ export function createCollectionCard(
 	parent: HTMLElement,
 	opts: {
 		name: string;
+		path: string;
 		coverSrc: string | null;
 		onOpen: () => void;
 	},
 ): HTMLElement {
 	const card = parent.createDiv({ cls: "media-tracker-card media-tracker-card-collection" });
+	// ninja: data-path mirrors item cards so the drag-drop handler can resolve the target
+	// for both card types with a single .closest('.media-tracker-card') selector.
+	card.dataset.path = opts.path;
 	card.addEventListener("click", opts.onOpen);
 	renderCover(card, opts.name, opts.coverSrc);
 	card.createDiv({ cls: "media-tracker-card-title", text: opts.name, attr: { title: opts.name } });
