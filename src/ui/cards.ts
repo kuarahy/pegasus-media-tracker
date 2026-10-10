@@ -13,6 +13,18 @@ export function createCollectionCard(
 	return card;
 }
 
+// ninja: anchors to a digit immediately before ` - ` so series names that contain a
+// hyphen (e.g., "Spider-Man 5") are never split — only "{series} {n} - {variant}" matches.
+const VARIANT_SPLIT = /^(.*\d)\s+-\s+(.+)$/;
+
+function parseTitleParts(name: string): { primary: string; secondary: string } | null {
+	const match = name.match(VARIANT_SPLIT);
+	// ninja: groups 1 and 2 are always present when the regex matches (both are non-optional
+	// capture groups), so the non-null assertions are safe.
+	if (!match || !match[1] || !match[2]) return null;
+	return { primary: match[1].trimEnd(), secondary: match[2].trimStart() };
+}
+
 export function createItemCard(
 	parent: HTMLElement,
 	opts: {
@@ -31,8 +43,17 @@ export function createItemCard(
 	card.addEventListener("click", opts.onOpen);
 	renderCover(card, opts.name, opts.coverSrc);
 
-	const title = card.createDiv({ cls: "media-tracker-card-title", text: opts.name, attr: { title: opts.name } });
-	title.addEventListener("click", (event) => {
+	const titleEl = card.createDiv({ cls: "media-tracker-card-title", attr: { title: opts.name } });
+	const parts = parseTitleParts(opts.name);
+	if (parts) {
+		// ninja: en dash (\u2013) replaces the hyphen-minus from the filename; the tooltip
+		// on the parent still carries the raw filename string for screen readers and hover.
+		titleEl.createSpan({ cls: "media-tracker-card-title-primary", text: parts.primary });
+		titleEl.createSpan({ cls: "media-tracker-card-title-secondary", text: ` \u2013 ${parts.secondary}` });
+	} else {
+		titleEl.setText(opts.name);
+	}
+	titleEl.addEventListener("click", (event) => {
 		event.stopPropagation();
 		opts.onOpen();
 	});

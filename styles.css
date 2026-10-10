@@ -8,7 +8,19 @@
 	display: flex;
 	align-items: center;
 	gap: var(--size-4-2);
-	margin-bottom: var(--size-4-3);
+	/* sticky: pins toolbar to the top of the scrollport while the grid scrolls beneath */
+	position: sticky;
+	top: 0;
+	z-index: 1;
+	background-color: var(--background-primary);
+	/* negative margins + matching padding pulls the background edge-to-edge, covering
+	   side-gutter slivers that would otherwise show grid cards scrolling behind */
+	margin-left: calc(-1 * var(--size-4-3));
+	margin-right: calc(-1 * var(--size-4-3));
+	padding-left: var(--size-4-3);
+	padding-right: var(--size-4-3);
+	/* padding-bottom replaces margin-bottom so the background covers the gap to the grid */
+	padding-bottom: var(--size-4-3);
 }
 
 .media-tracker-breadcrumb {
@@ -113,6 +125,14 @@
 	display: -webkit-box;
 	-webkit-line-clamp: 2;
 	-webkit-box-orient: vertical;
+}
+
+/* ninja: variant suffix rendered at reduced weight so the issue number reads first;
+   relative scale preserves proportion at any user-configured UI font size */
+.media-tracker-card-title-secondary {
+	font-size: calc(var(--font-ui-small) * 0.88);
+	color: var(--text-muted);
+	opacity: 0.85;
 }
 
 .media-tracker-card-action {
