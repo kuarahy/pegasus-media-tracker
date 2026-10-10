@@ -11,7 +11,12 @@
 	/* sticky: pins toolbar to the top of the scrollport while the grid scrolls beneath */
 	position: sticky;
 	top: 0;
-	z-index: 1;
+	/* ninja: card-cover img children carry z-index:1 (stacks above blur layer) which lands
+	   in the same stacking context as this toolbar. Because the grid follows the toolbar in
+	   the DOM, those z-index:1 card images paint on top of a toolbar also at z-index:1 while
+	   scrolling. Raising to 10 clears every in-plugin layer (blur=0, img/pip=1) with room
+	   to spare, without conflicting with Obsidian's own UI chrome (modals, sidedock ~100+). */
+	z-index: 10;
 	background-color: var(--background-primary);
 	/* negative margins + matching padding pulls the background edge-to-edge, covering
 	   side-gutter slivers that would otherwise show grid cards scrolling behind */
