@@ -127,9 +127,25 @@
 	line-height: var(--line-height-tight);
 	overflow: hidden;
 	white-space: normal;
-	display: -webkit-box;
-	-webkit-line-clamp: 2;
-	-webkit-box-orient: vertical;
+	/* 3-line soft cap — no auto-injected ellipsis; overflow fades rather than truncates.
+	   ninja: max-height uses 1em so it self-scales with --font-ui-small on item cards
+	   and --font-ui-medium on collection cards (1em = element's own font-size).
+	   Gradient mask anchored calc(100% - 1.2em) from the bottom fires only when text
+	   actually reaches the bottom of the content area; on shorter titles the fade lands
+	   in the empty padding zone and is visually a no-op. */
+	max-height: calc(3 * 1em * var(--line-height-tight) + 2 * var(--size-4-2));
+	-webkit-mask-image: linear-gradient(
+		to bottom,
+		black 0%,
+		black calc(100% - 1.2em),
+		transparent 100%
+	);
+	mask-image: linear-gradient(
+		to bottom,
+		black 0%,
+		black calc(100% - 1.2em),
+		transparent 100%
+	);
 }
 
 /* ninja: variant suffix rendered at reduced weight so the issue number reads first;
@@ -140,8 +156,40 @@
 	opacity: 0.85;
 }
 
+/* Collection cards are navigation entry points; give their titles slightly more
+   presence than item cards so the grid is scannable at small widths.
+   ninja: specificity beats .media-tracker-card-title by one class — no !important,
+   no duplication of the base rule; padding/line-height/clamp setup inherited. */
+.media-tracker-card-collection .media-tracker-card-title {
+	font-size: var(--font-ui-medium);
+	font-weight: var(--font-semibold);
+	/* ninja: no -webkit-line-clamp here — base rule handles capping via max-height.
+	   1em here resolves to --font-ui-medium, so the 3-line cap scales up automatically. */
+}
+
+/* Ownership pip — top-right corner of the cover area.
+   ninja: .media-tracker-card-cover already carries position:relative (ambient blur layer);
+   z-index:1 sits above the blur layer but below any drag-drop overlay (z-index:2).
+   box-shadow halo uses --background-primary so it is theme-aware. */
+.media-tracker-card-item.is-owned .media-tracker-card-cover::after {
+	content: '';
+	position: absolute;
+	top: 6px;
+	right: 6px;
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+	background-color: var(--color-green);
+	box-shadow: 0 0 0 2px var(--background-primary);
+	pointer-events: none;
+	z-index: 1;
+}
+
 .media-tracker-card-action {
-	margin: 0 var(--size-4-2) var(--size-4-2);
+	/* ninja: auto top margin bottom-anchors the button in the flex column regardless
+	   of whether the title occupies 1, 2, or 3 lines. CSS grid equalises row heights,
+	   so every button in the same row lands at the same Y position. */
+	margin: auto var(--size-4-2) var(--size-4-2);
 }
 
 .media-tracker-view .media-tracker-card.is-done .media-tracker-card-action {
