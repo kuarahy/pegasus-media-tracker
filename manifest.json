@@ -1,7 +1,7 @@
 {
 	"id": "pegasus-media-tracker",
 	"name": "Pegasus Media Tracker",
-	"version": "1.3.0-beta.4",
+	"version": "1.3.0-beta.5",
 	"minAppVersion": "1.13.0",
 	"description": "Browse vault folders as a card grid, mark items done, and add the next numbered note. Works on mobile and syncs cleanly with Self-hosted LiveSync.",
 	"author": "Lucas Perez",
