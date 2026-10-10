@@ -1,5 +1,5 @@
 import { ItemView, Notice, TAbstractFile, TFile, WorkspaceLeaf } from "obsidian";
-import { createCollection, createNextNote, ensureCoverNote, ensureFolder, setCollectionTitle, setCoverOnNote, setItemCoverFromFile, setItemCoverFromVaultFile, toggleItemDone } from "../actions";
+import { createCollection, createNextNote, ensureCoverNote, ensureFolder, setCollectionCoverFromFile, setCollectionCoverFromVaultFile, setCollectionTitle, setCoverOnNote, setItemCoverFromFile, setItemCoverFromVaultFile, toggleItemDone } from "../actions";
 import { resolveCollectionCover, resolveItemCover } from "../cover";
 import {
 	addToolbarMode,
@@ -194,6 +194,7 @@ export class MediaTrackerView extends ItemView {
 			if (node.kind === "collection") {
 				createCollectionCard(parent, {
 					name: node.name,
+					path: node.path,
 					coverSrc: resolveCollectionCover(this.app, node.path),
 					onOpen: () => this.openFolder(node.path),
 				});
@@ -396,12 +397,12 @@ export class MediaTrackerView extends ItemView {
 	}
 
 	private onGridDragEnter(e: DragEvent): void {
-		const card = (e.target as HTMLElement).closest<HTMLElement>(".media-tracker-card-item");
+		const card = (e.target as HTMLElement).closest<HTMLElement>(".media-tracker-card");
 		if (card) this.gridEl?.classList.add("has-drag-active");
 	}
 
 	private onGridDragOver(e: DragEvent): void {
-		const card = (e.target as HTMLElement).closest<HTMLElement>(".media-tracker-card-item");
+		const card = (e.target as HTMLElement).closest<HTMLElement>(".media-tracker-card");
 		if (!card) return; // dragging over grid background — do not accept
 
 		const dt = e.dataTransfer;
@@ -431,7 +432,7 @@ export class MediaTrackerView extends ItemView {
 	}
 
 	private onGridDragLeave(e: DragEvent): void {
-		const card = (e.target as HTMLElement).closest<HTMLElement>(".media-tracker-card-item");
+		const card = (e.target as HTMLElement).closest<HTMLElement>(".media-tracker-card");
 		// ninja: dragleave fires when the pointer moves from the card to a child element
 		// (cover image, title div). If relatedTarget is still inside the card, skip —
 		// otherwise is-drop-target flickers off and immediately back on.
@@ -450,14 +451,18 @@ export class MediaTrackerView extends ItemView {
 		this.gridEl?.classList.remove("has-drag-active");
 		this.gridEl?.querySelectorAll(".is-drop-target").forEach((el) => el.classList.remove("is-drop-target"));
 
-		const card = (e.target as HTMLElement).closest<HTMLElement>(".media-tracker-card-item");
+		const card = (e.target as HTMLElement).closest<HTMLElement>(".media-tracker-card");
 		if (!card) return;
 
-		const itemPath = card.dataset.path;
-		if (!itemPath) return;
+		const cardPath = card.dataset.path;
+		if (!cardPath) return;
 
 		const dt = e.dataTransfer;
 		if (!dt) return;
+
+		// ninja: collection cards carry a folder path; item cards carry a note path.
+		// Dispatch to the appropriate action pair based on which class the card has.
+		const isCollection = card.classList.contains("media-tracker-card-collection");
 
 		if (dt.files.length > 0) {
 			const file = dt.files[0];
@@ -467,7 +472,11 @@ export class MediaTrackerView extends ItemView {
 				return;
 			}
 			try {
-				await setItemCoverFromFile(this.app, itemPath, file);
+				if (isCollection) {
+					await setCollectionCoverFromFile(this.app, cardPath, file);
+				} else {
+					await setItemCoverFromFile(this.app, cardPath, file);
+				}
 			} catch (err) {
 				new Notice(`Could not set cover: ${err instanceof Error ? err.message : String(err)}`);
 			}
@@ -476,7 +485,11 @@ export class MediaTrackerView extends ItemView {
 			const vaultPath = dt.getData("text/plain").trim();
 			if (!vaultPath) return;
 			try {
-				await setItemCoverFromVaultFile(this.app, itemPath, vaultPath);
+				if (isCollection) {
+					await setCollectionCoverFromVaultFile(this.app, cardPath, vaultPath);
+				} else {
+					await setItemCoverFromVaultFile(this.app, cardPath, vaultPath);
+				}
 			} catch (err) {
 				new Notice(`Could not set cover: ${err instanceof Error ? err.message : String(err)}`);
 			}

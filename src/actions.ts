@@ -271,6 +271,46 @@ export async function setItemCoverFromFile(app: App, itemPath: string, imageFile
 }
 
 /**
+ * Import an OS File into assets/covers/, then set cover: frontmatter on the
+ * collection's Cover note (created if it doesn't exist yet).
+ *
+ * ninja: collection covers live in assets/covers/ (slug-matched by
+ * findCoverFileForCollection). Item covers live beside their note — keep them separate
+ * so the slug scanner doesn't pick up item images as collection covers.
+ */
+export async function setCollectionCoverFromFile(app: App, folderPath: string, imageFile: File): Promise<void> {
+	const folder = getFolderByPath(app, folderPath);
+	if (!folder) throw new Error(`Collection folder not found: ${folderPath}`);
+
+	const note = await ensureCoverNote(app, folder);
+
+	await ensureFolder(app, COVER_FOLDER);
+	const dot = imageFile.name.lastIndexOf(".");
+	const ext = dot === -1 ? "" : imageFile.name.slice(dot).toLowerCase();
+	const destPath = availableCoverPath(app, `${folder.name}${ext}`);
+
+	const buffer = await imageFile.arrayBuffer();
+	await app.vault.createBinary(destPath, buffer);
+	await setCoverOnNote(app, note, `[[${destPath}]]`);
+}
+
+/**
+ * Point a collection's cover: frontmatter at an existing vault image file.
+ * No file copy — the image is already in the vault.
+ */
+export async function setCollectionCoverFromVaultFile(app: App, folderPath: string, imagePath: string): Promise<void> {
+	const folder = getFolderByPath(app, folderPath);
+	if (!folder) throw new Error(`Collection folder not found: ${folderPath}`);
+
+	const imageFile = app.vault.getAbstractFileByPath(imagePath);
+	if (!(imageFile instanceof TFile)) throw new Error(`Vault file not found: ${imagePath}`);
+	if (!isImageFile(imageFile)) throw new Error(`Not an image file: ${imagePath}`);
+
+	const note = await ensureCoverNote(app, folder);
+	await setCoverOnNote(app, note, `[[${imagePath}]]`);
+}
+
+/**
  * Point an item's cover: frontmatter at an existing vault image file.
  * No file copy — the image is already in the vault.
  */

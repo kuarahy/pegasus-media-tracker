@@ -231,16 +231,16 @@
 	}
 }
 
-/* ── Item card drag-drop cover ─────────────────────────────────────── */
+/* ── Card drag-drop cover (item and collection cards) ──────────────── */
 
 /* Accent outline on the hovered drop target — inset so card size doesn't change */
-.media-tracker-card-item.is-drop-target {
+.media-tracker-card.is-drop-target {
 	outline: 2px solid var(--color-accent);
 	outline-offset: -2px;
 }
 
-/* Dim all non-targeted item cards while a drag is active over the grid */
-.media-tracker-grid.has-drag-active .media-tracker-card-item:not(.is-drop-target) {
+/* Dim all non-targeted cards while a drag is active over the grid */
+.media-tracker-grid.has-drag-active .media-tracker-card:not(.is-drop-target) {
 	opacity: 0.4;
 	transition: opacity 80ms ease;
 }
@@ -248,7 +248,7 @@
 /* "Set cover" overlay on the cover area of the targeted card.
    ninja: .media-tracker-card-cover already has position:relative, so ::after
    absolute positioning anchors correctly without any parent change. */
-.media-tracker-card-item.is-drop-target .media-tracker-card-cover::after {
+.media-tracker-card.is-drop-target .media-tracker-card-cover::after {
 	content: "Set cover";
 	position: absolute;
 	inset: 0;
