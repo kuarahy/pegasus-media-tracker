@@ -1,6 +1,6 @@
-import { App, TFile, TFolder, Vault, normalizePath } from "obsidian";
+import { App, TFile, TFolder, Vault } from "obsidian";
 import { findCoverFileForCollection, isImageFile } from "./cover";
-import { COVER_FOLDER, COVER_NOTE_STEM, findFolderNote, getFolderByPath, listItemBasenames, readDone } from "./library";
+import { COVER_FOLDER, COVER_NOTE_STEM, ITEM_COVER_FOLDER, findFolderNote, getFolderByPath, listItemBasenames, readDone } from "./library";
 import { nextNoteBasename } from "./naming";
 
 const PATH_SEPARATORS = /[\\/]/;
@@ -221,47 +221,38 @@ function availableCoverPath(app: App, filename: string): string {
 	return `${COVER_FOLDER}/${base} ${n}${ext}`;
 }
 
-// ninja: mirrors availableCoverPath but scoped to an arbitrary folder rather than assets/covers/.
-// Item covers live beside their note, not in the collection cover namespace.
-function availablePathInFolder(vault: Vault, folder: TFolder, preferred: string, fallback: string): string {
-	const folderBase = folder.path === "/" ? "" : folder.path;
-	const preferred_ = normalizePath(`${folderBase}/${preferred}`);
-	if (!vault.getAbstractFileByPath(preferred_)) return preferred_;
-
-	const orig = normalizePath(`${folderBase}/${fallback}`);
-	if (!vault.getAbstractFileByPath(orig)) return orig;
-
-	const dot = fallback.lastIndexOf(".");
-	const base = dot === -1 ? fallback : fallback.slice(0, dot);
-	const ext = dot === -1 ? "" : fallback.slice(dot);
+// ninja: item covers share one folder across all collections, so two "Issue 01" items would collide.
+// Number the item-derived name instead of falling back to the OS filename, which is often meaningless.
+function availableItemCoverPath(vault: Vault, filename: string): string {
+	const desired = `${ITEM_COVER_FOLDER}/${filename}`;
+	if (!vault.getAbstractFileByPath(desired)) return desired;
+	const dot = filename.lastIndexOf(".");
+	const base = dot === -1 ? filename : filename.slice(0, dot);
+	const ext = dot === -1 ? "" : filename.slice(dot);
 	let n = 1;
-	while (vault.getAbstractFileByPath(normalizePath(`${folderBase}/${base} ${n}${ext}`))) {
+	while (vault.getAbstractFileByPath(`${ITEM_COVER_FOLDER}/${base} ${n}${ext}`)) {
 		n += 1;
 	}
-	return normalizePath(`${folderBase}/${base} ${n}${ext}`);
+	return `${ITEM_COVER_FOLDER}/${base} ${n}${ext}`;
 }
 
 /**
- * Import an OS File (from a drag-drop event) into the vault beside the item note,
+ * Import an OS File (from a drag-drop event) into assets/item-covers/,
  * then set cover: frontmatter on the note.
  *
- * ninja: destination is the item's own folder, not assets/covers/ — that folder is for
- * collection covers. Mixing them would pollute findCoverFileForCollection's slug-matching.
- * Naming preference: {itemBasename}{ext}, falling back to the original OS filename.
+ * ninja: a dedicated subfolder of assets/, not assets/covers/ itself — findCoverFileForCollection
+ * prefix-matches filenames there, so "Saga 01.jpg" would hijack the "Saga" collection cover.
+ * Naming preference: {itemBasename}{ext}, numbered on collision.
  */
 export async function setItemCoverFromFile(app: App, itemPath: string, imageFile: File): Promise<void> {
 	const itemFile = app.vault.getAbstractFileByPath(itemPath);
 	if (!(itemFile instanceof TFile)) throw new Error(`Item note not found: ${itemPath}`);
 
-	const folder = itemFile.parent;
-	if (!folder) throw new Error(`Item note has no parent folder: ${itemPath}`);
-
+	await ensureFolder(app, ITEM_COVER_FOLDER);
 	const dot = imageFile.name.lastIndexOf(".");
 	const ext = dot === -1 ? "" : imageFile.name.slice(dot).toLowerCase();
 	const stem = itemFile.name.replace(/\.md$/i, "");
-	const preferred = `${stem}${ext}`;
-	const destPath = availablePathInFolder(app.vault, folder, preferred, imageFile.name);
-
+	const destPath = availableItemCoverPath(app.vault, `${stem}${ext}`);
 	const buffer = await imageFile.arrayBuffer();
 	await app.vault.createBinary(destPath, buffer);
 

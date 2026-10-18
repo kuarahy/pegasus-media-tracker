@@ -26,6 +26,7 @@ export function isLibraryRoot(folderPath: string, libraryFolder: string): boolea
 }
 
 export const COVER_FOLDER = "assets/covers";
+export const ITEM_COVER_FOLDER = "assets/item-covers";
 export const COVER_NOTE_STEM = "Cover";
 
 const HIDDEN_COLLECTION_FOLDERS = new Set(["assets", "covers"]);
