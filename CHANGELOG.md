@@ -6,6 +6,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions follo
 
 ---
 
+## [1.3.1] — 2026-10-18
+
+### Fixed
+
+- **Drag-drop item covers** — images dropped onto an item card are now imported into `assets/covers/` (the same folder as collection covers) instead of landing beside the note.
+
+---
+
 ## [1.3.0] — 2026-10-10
 
 ### Added
