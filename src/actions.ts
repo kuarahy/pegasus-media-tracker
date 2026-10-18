@@ -1,6 +1,6 @@
 import { App, TFile, TFolder, Vault } from "obsidian";
 import { findCoverFileForCollection, isImageFile } from "./cover";
-import { COVER_FOLDER, COVER_NOTE_STEM, ITEM_COVER_FOLDER, findFolderNote, getFolderByPath, listItemBasenames, readDone } from "./library";
+import { COVER_FOLDER, COVER_NOTE_STEM, findFolderNote, getFolderByPath, listItemBasenames, readDone } from "./library";
 import { nextNoteBasename } from "./naming";
 
 const PATH_SEPARATORS = /[\\/]/;
@@ -221,38 +221,23 @@ function availableCoverPath(app: App, filename: string): string {
 	return `${COVER_FOLDER}/${base} ${n}${ext}`;
 }
 
-// ninja: item covers share one folder across all collections, so two "Issue 01" items would collide.
-// Number the item-derived name instead of falling back to the OS filename, which is often meaningless.
-function availableItemCoverPath(vault: Vault, filename: string): string {
-	const desired = `${ITEM_COVER_FOLDER}/${filename}`;
-	if (!vault.getAbstractFileByPath(desired)) return desired;
-	const dot = filename.lastIndexOf(".");
-	const base = dot === -1 ? filename : filename.slice(0, dot);
-	const ext = dot === -1 ? "" : filename.slice(dot);
-	let n = 1;
-	while (vault.getAbstractFileByPath(`${ITEM_COVER_FOLDER}/${base} ${n}${ext}`)) {
-		n += 1;
-	}
-	return `${ITEM_COVER_FOLDER}/${base} ${n}${ext}`;
-}
-
 /**
- * Import an OS File (from a drag-drop event) into assets/item-covers/,
+ * Import an OS File (from a drag-drop event) into assets/covers/,
  * then set cover: frontmatter on the note.
  *
- * ninja: a dedicated subfolder of assets/, not assets/covers/ itself — findCoverFileForCollection
- * prefix-matches filenames there, so "Saga 01.jpg" would hijack the "Saga" collection cover.
+ * ninja: one assets folder for all covers so users maintain a single directory. Trade-off:
+ * findCoverFileForCollection prefix-matches names there, same as for any image the user drops in.
  * Naming preference: {itemBasename}{ext}, numbered on collision.
  */
 export async function setItemCoverFromFile(app: App, itemPath: string, imageFile: File): Promise<void> {
 	const itemFile = app.vault.getAbstractFileByPath(itemPath);
 	if (!(itemFile instanceof TFile)) throw new Error(`Item note not found: ${itemPath}`);
 
-	await ensureFolder(app, ITEM_COVER_FOLDER);
+	await ensureFolder(app, COVER_FOLDER);
 	const dot = imageFile.name.lastIndexOf(".");
 	const ext = dot === -1 ? "" : imageFile.name.slice(dot).toLowerCase();
 	const stem = itemFile.name.replace(/\.md$/i, "");
-	const destPath = availableItemCoverPath(app.vault, `${stem}${ext}`);
+	const destPath = availableCoverPath(app, `${stem}${ext}`);
 	const buffer = await imageFile.arrayBuffer();
 	await app.vault.createBinary(destPath, buffer);
 
